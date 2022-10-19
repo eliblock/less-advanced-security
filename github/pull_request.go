@@ -1,7 +1,10 @@
 package github
 
 import (
+	"bufio"
 	"context"
+	"strconv"
+	"strings"
 
 	"github.com/google/go-github/v47/github"
 	"github.com/pkg/errors"
@@ -20,9 +23,12 @@ type pullRequest struct {
 	files       []*pullRequestFile
 }
 
+type lineBound struct {
+	start, end int
+}
 type pullRequestFile struct {
-	filename string
-	patch    string
+	filename, patch string
+	lineBounds      []lineBound
 }
 
 func createPullRequest(client *github.Client, owner string, repo string, number int, headSHA string) (*pullRequest, error) {
@@ -37,6 +43,7 @@ func createPullRequest(client *github.Client, owner string, repo string, number 
 		return nil, errors.Wrap(err, "failed to load pull request from GitHub")
 	}
 
+	// Load all files from PR (uses _latest_ files on PR, not limited by headSHA)
 	if err := pr.loadFiles(client); err != nil {
 		return nil, errors.Wrap(err, "failed to load files from GitHub")
 	}
@@ -58,7 +65,11 @@ func (pr *pullRequest) loadFiles(client *github.Client) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to list files (page 0)")
 	}
-	pr.files = append(pr.files, sdkFilesToInternalFiles(files)...)
+	internalFiles, err := sdkFilesToInternalFiles(files)
+	if err != nil {
+		return errors.Wrap(err, "failed to convert files (page 0)")
+	}
+	pr.files = append(pr.files, internalFiles...)
 
 	for response.NextPage != 0 {
 		desiredPage := response.NextPage
@@ -66,7 +77,12 @@ func (pr *pullRequest) loadFiles(client *github.Client) error {
 		if err != nil {
 			return errors.Wrapf(err, "failed to list files (page %d)", desiredPage)
 		}
-		pr.files = append(pr.files, sdkFilesToInternalFiles(files)...)
+
+		internalFiles, err := sdkFilesToInternalFiles(files)
+		if err != nil {
+			return errors.Wrapf(err, "failed to convert files (page %d)", desiredPage)
+		}
+		pr.files = append(pr.files, internalFiles...)
 	}
 
 	return nil
@@ -74,12 +90,67 @@ func (pr *pullRequest) loadFiles(client *github.Client) error {
 
 /* * * * * Helpers * * * * */
 
-func sdkFilesToInternalFiles(sdkFiles []*github.CommitFile) (internalFiles []*pullRequestFile) {
+func sdkFilesToInternalFiles(sdkFiles []*github.CommitFile) ([]*pullRequestFile, error) {
+	var internalFiles []*pullRequestFile
+
 	for _, file := range sdkFiles {
 		if file == nil || file.Filename == nil || file.Patch == nil {
 			continue
 		}
-		internalFiles = append(internalFiles, &pullRequestFile{filename: *file.Filename, patch: *file.Patch})
+
+		lineBounds, err := patchToLineBounds(*file.Patch)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to generate line bounds for file %q", *file.Filename)
+		}
+
+		internalFiles = append(
+			internalFiles,
+			&pullRequestFile{
+				filename:   *file.Filename,
+				patch:      *file.Patch,
+				lineBounds: lineBounds,
+			},
+		)
 	}
-	return
+	return internalFiles, nil
+}
+
+// Convert a file patch to an array of lineBounds.
+//
+// A couple optimization are used specific to our use case:
+//   - only the _new_ line numbers are recorded (we will never annotate deleted
+//     lines - only new or unchanged ones)
+//   - the full patch range is recorded, including leading/trailing lines that
+//     are unchanged (we may annotate nearby lines that were not modified)
+func patchToLineBounds(patch string) ([]lineBound, error) {
+	var lineBounds []lineBound
+
+	scanner := bufio.NewScanner(strings.NewReader(patch))
+	for scanner.Scan() {
+		line := scanner.Text()
+		// patch header lines are formatted like:
+		// @@ -0,0 +1,5 @@
+		if len(line) >= 15 && len(line) <= 30 && strings.HasPrefix(line, "@@ -") && strings.HasSuffix(line, " @@") {
+			// split into four pieces: (0) @@, (1) old line numbers, (2), new line numbers, (3) @@
+			segments := strings.Split(line, " ")
+			if len(segments) != 4 {
+				continue
+			}
+
+			// split and parse new line numbers
+			bounds := strings.Split(segments[2], ",")
+			start, err := strconv.Atoi(bounds[0][1:])
+			if err != nil {
+				return nil, errors.Wrapf(err, "failed to convert %v to integer while processing %q", bounds[0][1:], line)
+			}
+			end, err := strconv.Atoi(bounds[1])
+			if err != nil {
+				return nil, errors.Wrapf(err, "failed to convert %v to integer while processing %q", bounds[0][1:], line)
+			}
+
+			lineBounds = append(lineBounds, lineBound{start: start, end: end})
+		}
+	}
+
+	return lineBounds, nil
 }
