@@ -13,7 +13,7 @@ const (
 
 type Annotation struct {
 	githubAnnotation   *github.CheckRunAnnotation
-	filePath           string
+	fileName           string
 	startLine, endLine int
 	level              int
 }
@@ -46,7 +46,7 @@ func CreateAnnotation(path string, startLine int, endLine int, level string, tit
 			RawDetails:      &details,
 		},
 		level:     normalizedLevel,
-		filePath:  path,
+		fileName:  path,
 		startLine: startLine,
 		endLine:   endLine,
 	}, nil

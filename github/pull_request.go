@@ -96,7 +96,7 @@ func (pr *pullRequest) filterAnnotations(annotations []*Annotation) []*Annotatio
 
 	var filteredAnnotations []*Annotation
 	for _, annotation := range annotations {
-		lineBounds, found := fileToLineBounds[annotation.filePath]
+		lineBounds, found := fileToLineBounds[annotation.fileName]
 		if found {
 			for _, bound := range lineBounds {
 				if annotation.startLine >= bound.start && annotation.startLine <= bound.end ||
