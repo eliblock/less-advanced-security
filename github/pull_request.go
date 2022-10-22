@@ -88,6 +88,29 @@ func (pr *pullRequest) loadFiles(client *github.Client) error {
 	return nil
 }
 
+func (pr *pullRequest) filterAnnotations(annotations []*Annotation) []*Annotation {
+	fileToLineBounds := make(map[string][]lineBound)
+	for _, file := range pr.files {
+		fileToLineBounds[file.filename] = file.lineBounds
+	}
+
+	var filteredAnnotations []*Annotation
+	for _, annotation := range annotations {
+		lineBounds, found := fileToLineBounds[annotation.filePath]
+		if found {
+			for _, bound := range lineBounds {
+				if annotation.startLine >= bound.start && annotation.startLine <= bound.end ||
+					annotation.endLine >= bound.start && annotation.endLine <= bound.end {
+					filteredAnnotations = append(filteredAnnotations, annotation)
+					break
+				}
+			}
+		}
+	}
+
+	return filteredAnnotations
+}
+
 /* * * * * Helpers * * * * */
 
 func sdkFilesToInternalFiles(sdkFiles []*github.CommitFile) ([]*pullRequestFile, error) {

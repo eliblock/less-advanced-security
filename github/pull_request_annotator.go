@@ -42,7 +42,11 @@ func computeConclusion(annotations []*Annotation) string {
 	return conclusion
 }
 
-func (annotator *PullRequestAnnotator) PostAnnotations(annotations []*Annotation, checkName string) error {
+func (annotator *PullRequestAnnotator) PostAnnotations(annotations []*Annotation, checkName string, filterAnnotations bool) error {
+	if filterAnnotations {
+		annotations = annotator.pr.filterAnnotations(annotations)
+	}
+
 	const MAX_ANNOTATIONS_PER_PAGE = 50
 	// When creating a check run you can add only 50 annotations - later annotations must be added via an update to the
 	// run. Split our annotations accordingly, and pull the github annotation off them.

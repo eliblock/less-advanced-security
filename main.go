@@ -40,6 +40,8 @@ func main() {
 
 	sarifPath := flag.String("sarif_path", "", "absolute path to your sarif file")
 
+	filterAnnotations := flag.Bool("filter_annotations", true, "filter annotations by lines found in the git patches, default true")
+
 	flag.Parse()
 
 	parsedRepo := strings.Split(*repo, "/")
@@ -70,7 +72,7 @@ func main() {
 		annotations = append(annotations, annotation)
 	}
 
-	if err := annotator.PostAnnotations(annotations, tool.Name); err != nil {
+	if err := annotator.PostAnnotations(annotations, tool.Name, *filterAnnotations); err != nil {
 		log.Fatal(errors.Wrap(err, "failed to post annotations"))
 	}
 }
