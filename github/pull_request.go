@@ -129,26 +129,26 @@ func patchToLineBounds(patch string) ([]lineBound, error) {
 	for scanner.Scan() {
 		line := scanner.Text()
 		// patch header lines are formatted like:
-		// @@ -0,0 +1,5 @@
-		if len(line) >= 15 && len(line) <= 30 && strings.HasPrefix(line, "@@ -") && strings.HasSuffix(line, " @@") {
-			// split into four pieces: (0) @@, (1) old line numbers, (2), new line numbers, (3) @@
+		// @@ -0,0 +1,5 @@ <arbitrary line of code which may be blank>
+		if len(line) >= 15 && strings.HasPrefix(line, "@@ -") && strings.Contains(line[2:], " @@") {
+			// split into four pieces: (0) @@, (1) old line number and offset, (2), new line number and offset, (3) @@
 			segments := strings.Split(line, " ")
-			if len(segments) != 4 {
+			if len(segments) < 4 {
 				continue
 			}
 
 			// split and parse new line numbers
 			bounds := strings.Split(segments[2], ",")
-			start, err := strconv.Atoi(bounds[0][1:])
+			start, err := strconv.Atoi(bounds[0][1:]) // drop the "+"
 			if err != nil {
 				return nil, errors.Wrapf(err, "failed to convert %v to integer while processing %q", bounds[0][1:], line)
 			}
-			end, err := strconv.Atoi(bounds[1])
+			endOffset, err := strconv.Atoi(bounds[1])
 			if err != nil {
 				return nil, errors.Wrapf(err, "failed to convert %v to integer while processing %q", bounds[0][1:], line)
 			}
 
-			lineBounds = append(lineBounds, lineBound{start: start, end: end})
+			lineBounds = append(lineBounds, lineBound{start: start, end: start + endOffset})
 		}
 	}
 
