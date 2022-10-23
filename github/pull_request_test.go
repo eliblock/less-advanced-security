@@ -84,7 +84,7 @@ func TestSdkFilesToInternalFiles(t *testing.T) {
 		lineBounds: bounds_2,
 	}
 
-	var tests = []struct {
+	tests := []struct {
 		name          string
 		sdkFiles      []*github.CommitFile
 		internalFiles []*pullRequestFile
@@ -148,7 +148,7 @@ func TestSdkFilesToInternalFiles(t *testing.T) {
 }
 
 func TestPatchToLineBounds(t *testing.T) {
-	var tests = []struct {
+	tests := []struct {
 		name, patch string
 		lineBounds  []lineBound
 	}{

@@ -11,7 +11,7 @@ import (
 )
 
 func TestLevelStringToNormalizedLevel(t *testing.T) {
-	var tests = []struct {
+	tests := []struct {
 		in  string
 		out int
 	}{
@@ -33,7 +33,7 @@ func TestLevelStringToNormalizedLevel(t *testing.T) {
 }
 
 func TestLevelStringToNormalizedLevelErrors(t *testing.T) {
-	var tests = []string{"info", "warn", "error"}
+	tests := []string{"info", "warn", "error"}
 	for _, tt_in := range tests {
 		t.Run(tt_in, func(t *testing.T) {
 			_, err := levelStringToNormalizedLevel(tt_in)
