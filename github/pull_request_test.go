@@ -43,6 +43,127 @@ func pullRequestFilesString(files []*pullRequestFile) string {
 	return combined
 }
 
+func TestFilterAnnotations(t *testing.T) {
+	main := "src/main.go"
+	test := "src/main_test.go"
+	pullRequestFile_1 := pullRequestFile{
+		filename:   main,
+		patch:      "...",
+		lineBounds: []lineBound{{5, 15}},
+	}
+	pullRequestFile_2 := pullRequestFile{
+		filename:   test,
+		patch:      "...",
+		lineBounds: []lineBound{{1, 5}, {11, 15}},
+	}
+	pr_empty := pullRequest{
+		files: []*pullRequestFile{},
+	}
+	pr_main_and_test := pullRequest{
+		files: []*pullRequestFile{&pullRequestFile_1, &pullRequestFile_2},
+	}
+	pr_test := pullRequest{
+		files: []*pullRequestFile{&pullRequestFile_2},
+	}
+
+	main_annotation_in_bound := Annotation{
+		fileName:  main,
+		startLine: 6,
+		endLine:   7,
+	}
+	main_annotation_out_of_bounds := Annotation{
+		fileName:  main,
+		startLine: 2,
+		endLine:   3,
+	}
+	main_annotation_covering := Annotation{
+		fileName:  main,
+		startLine: 1,
+		endLine:   100,
+	}
+
+	test_annotation_start_in_bound := Annotation{
+		fileName:  test,
+		startLine: 5,
+		endLine:   6,
+	}
+	test_annotation_end_in_bound := Annotation{
+		fileName:  test,
+		startLine: 8,
+		endLine:   11,
+	}
+	test_annotation_out_of_bounds := Annotation{
+		fileName:  test,
+		startLine: 6,
+		endLine:   9,
+	}
+
+	other_annotation := Annotation{
+		fileName:  "other_file.py",
+		startLine: 1,
+		endLine:   100,
+	}
+
+	tests := []struct {
+		name                             string
+		pr                               pullRequest
+		annotations, filteredAnnotations []*Annotation
+	}{
+		{
+			"empty PR",
+			pr_empty,
+			[]*Annotation{&main_annotation_in_bound, &test_annotation_start_in_bound, &other_annotation},
+			[]*Annotation{},
+		},
+		{
+			"no overlap with",
+			pr_main_and_test,
+			[]*Annotation{&other_annotation},
+			[]*Annotation{},
+		},
+		{
+			"multiple files multiple overlaps",
+			pr_main_and_test,
+			[]*Annotation{&main_annotation_in_bound, &main_annotation_out_of_bounds, &test_annotation_start_in_bound, &test_annotation_end_in_bound, &test_annotation_out_of_bounds, &other_annotation},
+			[]*Annotation{&main_annotation_in_bound, &test_annotation_start_in_bound, &test_annotation_end_in_bound},
+		},
+		{
+			"one file with annotations that match lines but are in other file",
+			pr_test,
+			[]*Annotation{&main_annotation_in_bound, &other_annotation},
+			[]*Annotation{},
+		},
+		{
+			"covering annotation",
+			pr_main_and_test,
+			[]*Annotation{&main_annotation_covering},
+			[]*Annotation{&main_annotation_covering},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.pr.filterAnnotations(tt.annotations)
+
+			for _, expectedAnnotation := range tt.filteredAnnotations {
+				found := false
+				for _, gotAnnotation := range got {
+					if *gotAnnotation == *expectedAnnotation {
+						found = true
+						break
+					}
+				}
+				if !found {
+					t.Errorf("Expected annotation %s but did not find it.", expectedAnnotation)
+				}
+			}
+
+			if len(tt.filteredAnnotations) != len(got) {
+				t.Errorf("expected %d annotations but got %d", len(tt.filteredAnnotations), len(got))
+			}
+		})
+	}
+}
+
 func TestSdkFilesToInternalFiles(t *testing.T) {
 	filename_1 := "src/main.go"
 	patch_1 := `@@ -0,0 +1,2 @@

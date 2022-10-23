@@ -99,8 +99,10 @@ func (pr *pullRequest) filterAnnotations(annotations []*Annotation) []*Annotatio
 		lineBounds, found := fileToLineBounds[annotation.fileName]
 		if found {
 			for _, bound := range lineBounds {
-				if annotation.startLine >= bound.start && annotation.startLine <= bound.end ||
-					annotation.endLine >= bound.start && annotation.endLine <= bound.end {
+				start_in_bounds := annotation.startLine >= bound.start && annotation.startLine <= bound.end
+				end_in_bounds := annotation.endLine >= bound.start && annotation.endLine <= bound.end
+				covering_bounds := annotation.startLine <= bound.end && annotation.endLine >= bound.start
+				if start_in_bounds || end_in_bounds || covering_bounds {
 					filteredAnnotations = append(filteredAnnotations, annotation)
 					break
 				}
