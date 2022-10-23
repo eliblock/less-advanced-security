@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	github.com/bradleyfalzon/ghinstallation v1.1.1
+	github.com/google/go-cmp v0.5.9
 	github.com/google/go-github/v47 v47.1.0
 	github.com/owenrumney/go-sarif v1.1.1
 	github.com/pkg/errors v0.9.1

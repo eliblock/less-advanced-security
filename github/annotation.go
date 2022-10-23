@@ -18,21 +18,26 @@ type Annotation struct {
 	level              int
 }
 
-func CreateAnnotation(path string, startLine int, endLine int, level string, title string, message string, details string) (*Annotation, error) {
-	normalizedLevel := -1
+func levelStringToNormalizedLevel(level string) (normalizedLevel int, err error) {
+	normalizedLevel = -1
 	switch level {
 	case "notice":
 		normalizedLevel = noticeLevel
-		break
 	case "warning":
 		normalizedLevel = warningLevel
-		break
 	case "failure":
 		normalizedLevel = failureLevel
-		break
 	}
 	if normalizedLevel < 0 {
-		return nil, errors.Errorf("invalid annotation level %v", level)
+		err = errors.Errorf("invalid annotation level %v", level)
+	}
+	return
+}
+
+func CreateAnnotation(path string, startLine int, endLine int, level string, title string, message string, details string) (*Annotation, error) {
+	normalizedLevel, err := levelStringToNormalizedLevel(level)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to normalize level")
 	}
 
 	return &Annotation{
