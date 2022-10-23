@@ -166,12 +166,12 @@ func patchToLineBounds(patch string) ([]lineBound, error) {
 			if err != nil {
 				return nil, errors.Wrapf(err, "failed to convert %v to integer while processing %q", bounds[0][1:], line)
 			}
-			endOffset, err := strconv.Atoi(bounds[1])
+			endOffset, err := strconv.Atoi(bounds[1]) // one-indexed offset (subtract 1 when using)
 			if err != nil {
 				return nil, errors.Wrapf(err, "failed to convert %v to integer while processing %q", bounds[0][1:], line)
 			}
 
-			lineBounds = append(lineBounds, lineBound{start: start, end: start + endOffset})
+			lineBounds = append(lineBounds, lineBound{start: start, end: start + endOffset - 1})
 		}
 	}
 
