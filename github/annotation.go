@@ -18,15 +18,23 @@ type Annotation struct {
 	level              int
 }
 
-func levelStringToNormalizedLevel(level string) (normalizedLevel int, err error) {
+// map sarif levels (https://docs.oasis-open.org/sarif/sarif/v2.0/sarif-v2.0.html#_Ref508894469) to GitHub levels
+func levelStringToNormalizedLevel(level string) (normalizedLevel int, normalizedLevelString string, err error) {
 	normalizedLevel = -1
+	normalizedLevelString = ""
 	switch level {
-	case "notice":
+	case "none":
 		normalizedLevel = noticeLevel
+		normalizedLevelString = "notice"
+	case "note":
+		normalizedLevel = noticeLevel
+		normalizedLevelString = "notice"
 	case "warning":
 		normalizedLevel = warningLevel
-	case "failure":
+		normalizedLevelString = "warning"
+	case "error":
 		normalizedLevel = failureLevel
+		normalizedLevelString = "failure"
 	}
 	if normalizedLevel < 0 {
 		err = errors.Errorf("invalid annotation level %v", level)
@@ -35,7 +43,7 @@ func levelStringToNormalizedLevel(level string) (normalizedLevel int, err error)
 }
 
 func CreateAnnotation(path string, startLine int, endLine int, level string, title string, message string, details string) (*Annotation, error) {
-	normalizedLevel, err := levelStringToNormalizedLevel(level)
+	normalizedLevel, normalizedLevelString, err := levelStringToNormalizedLevel(level)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to normalize level")
 	}
@@ -47,7 +55,7 @@ func CreateAnnotation(path string, startLine int, endLine int, level string, tit
 			EndLine:         &endLine,
 			Title:           &title,
 			Message:         &message,
-			AnnotationLevel: &level,
+			AnnotationLevel: &normalizedLevelString,
 			RawDetails:      &details,
 		},
 		level:     normalizedLevel,

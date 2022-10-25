@@ -12,18 +12,22 @@ import (
 
 func TestLevelStringToNormalizedLevel(t *testing.T) {
 	tests := []struct {
-		in  string
-		out int
+		in, outStr string
+		out        int
 	}{
-		{"notice", noticeLevel},
-		{"warning", warningLevel},
-		{"failure", failureLevel},
+		{"none", "notice", noticeLevel},
+		{"note", "notice", noticeLevel},
+		{"warning", "warning", warningLevel},
+		{"error", "failure", failureLevel},
 	}
 	for _, tt := range tests {
 		t.Run(fmt.Sprintf("%s returns %d", tt.in, tt.out), func(t *testing.T) {
-			got, err := levelStringToNormalizedLevel(tt.in)
+			got, gotStr, err := levelStringToNormalizedLevel(tt.in)
 			if err != nil {
 				t.Errorf("expected no error but received %q", err)
+			}
+			if gotStr != tt.outStr {
+				t.Errorf("expected %q, got %q", tt.outStr, gotStr)
 			}
 			if got != tt.out {
 				t.Errorf("expected %d, got %d", tt.out, got)
@@ -33,10 +37,10 @@ func TestLevelStringToNormalizedLevel(t *testing.T) {
 }
 
 func TestLevelStringToNormalizedLevelErrors(t *testing.T) {
-	tests := []string{"info", "warn", "error"}
+	tests := []string{"nil", "null", "info", "notice", "warn", "failure"}
 	for _, tt_in := range tests {
 		t.Run(tt_in, func(t *testing.T) {
-			_, err := levelStringToNormalizedLevel(tt_in)
+			_, _, err := levelStringToNormalizedLevel(tt_in)
 			if err == nil {
 				t.Error("expected an error but received none")
 			}

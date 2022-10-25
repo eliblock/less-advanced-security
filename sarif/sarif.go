@@ -46,9 +46,6 @@ func ParseFromFile(path string) (*Tool, []*Result, error) {
 	ruleid_to_level := map[string]string{}
 	for _, rule := range run.Tool.Driver.Rules {
 		ruleid_to_level[rule.ID] = fmt.Sprintf("%v", rule.DefaultConfiguration.Level)
-		if ruleid_to_level[rule.ID] == "note" || ruleid_to_level[rule.ID] == "info" || ruleid_to_level[rule.ID] == "informational" {
-			ruleid_to_level[rule.ID] = "notice"
-		}
 	}
 
 	results := []*Result{}
