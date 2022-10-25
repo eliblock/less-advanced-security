@@ -75,7 +75,7 @@ func (annotator *PullRequestAnnotator) PostAnnotations(annotations []*Annotation
 	}
 
 	conclusion := computeConclusion(annotations)
-	completed_at := github.Timestamp{time.Now()}
+	completed_at := github.Timestamp{Time: time.Now()}
 	options := github.CreateCheckRunOptions{
 		Name:        checkName,
 		HeadSHA:     annotator.pr.headSHA,

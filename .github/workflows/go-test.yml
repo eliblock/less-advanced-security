@@ -1,0 +1,26 @@
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: get go version
+        run: |
+          go_version=$(head -n 3 go.mod | tail -n 1 | cut -d ' ' -f 2)
+          echo "go_version=${go_version}" >> $GITHUB_ENV
+
+      - uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.go_version }}
+
+      - run: go build -v ./...
+
+      - run: go vet -v ./...
+
+      - run: go test -v ./...
