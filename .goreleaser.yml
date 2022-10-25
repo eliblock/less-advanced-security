@@ -1,0 +1,24 @@
+# Check the documentation at https://goreleaser.com
+project_name: less-advanced-security
+before:
+  hooks:
+    - go mod tidy
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+universal_binaries:
+  - replace: true
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: '{{ incpatch .Version }}-next'
+changelog:
+  use: github
+release:
+  draft: true
+  replace_existing_draft: true
+  target_commitish: '{{ .Commit }}'
+  mode: append

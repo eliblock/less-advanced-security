@@ -8,12 +8,6 @@ GitHub Advanced Security charges a per-active-commiter seat license of ~$600/yr.
 
 ## Setup
 
-### Environment
-
-```sh
-brew install go@1.19
-```
-
 ### GitHub Application
 
 1. [Create a GitHub App](https://docs.github.com/en/developers/apps/building-github-apps/creating-a-github-app) for your user or org.
@@ -27,17 +21,49 @@ brew install go@1.19
 1. [Generate a private key](https://docs.github.com/en/developers/apps/building-github-apps/authenticating-with-github-apps) and save it locally.
     * Note the path to the key for later.
 
+### Installation
+
+Builds of `less-advanced-security` are available for common platforms and architectures, likely including your CI environment.
+Download and install the [latest release of `less-advanced-security`](https://github.com/eliblock/less-advanced-security/releases/latest) for your platform and architecture.
+
+Confirm successful installation by reading the `--help` output:
+
+```sh
+less-advanced-security --help
+```
+
+
 ## Usage
 
 Run your sarif-producing scan, writing the sarif file to disk.
 
 Then run
 ```sh
-go run main.go -app_id=<app_id> -install_id=<install_id> -key_path=<path_to_key> -sha=<sha_of_target_commit> -repo=<repo_owner>/<repo_name> -pr=<pr_number> -sarif_path=<path_to_sarif_file>
+less-advanced-security -app_id=<app_id> -install_id=<install_id> -key_path=<path_to_key> -sha=<sha_of_target_commit> -repo=<repo_owner>/<repo_name> -pr=<pr_number> -sarif_path=<path_to_sarif_file>
 ```
 
 For example:
 
 ```sh
-go run main.go -app_id=12345 -install_id=87654321 -key_path=tmp/application_private_key.pem -sha=ee5dabb638b6b874c42bc3c915cf94d4b6b346b6 -repo=eliblock/less-advanced-security -pr=57 -sarif_path=/tmp/scan-results/sarif.json
+less-advanced-security -app_id=12345 -install_id=87654321 -key_path=tmp/application_private_key.pem -sha=ee5dabb638b6b874c42bc3c915cf94d4b6b346b6 -repo=eliblock/less-advanced-security -pr=57 -sarif_path=/tmp/scan-results/sarif.json
+```
+
+## Development
+
+### Environment
+
+```sh
+brew install go@1.19
+go build ./...
+go test -v ./...
+```
+
+### Release
+
+```sh
+brew install goreleaser
+git tag v0.1.0 # update for your version
+git push origin v0.1.0 # update for your version
+goreleaser release --rm-dist --snapshot # remove --snapshot for a full release
+# complete the release on GitHub
 ```
