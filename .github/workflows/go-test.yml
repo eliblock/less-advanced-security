@@ -16,7 +16,7 @@ jobs:
       - name: get go version
         id: get-go-version
         run: |
-          echo "::set-output name=go-version::$(head -n 3 go.mod | tail -n 1 | cut -d ' ' -f 2)"
+          echo "go-version=$(head -n 3 go.mod | tail -n 1 | cut -d ' ' -f 2)" >> $GITHUB_OUTPUT
 
       - uses: actions/setup-go@v3
         with:
@@ -25,8 +25,8 @@ jobs:
       - name: get go caches
         id: get-go-caches
         run: |
-          echo "::set-output name=go-build::$(go env GOCACHE)"
-          echo "::set-output name=go-mod::$(go env GOMODCACHE)"
+          echo "go-build=$(go env GOCACHE)" >> $GITHUB_OUTPUT
+          echo "go-mod=$(go env GOMODCACHE)" >> $GITHUB_OUTPUT
 
       - name: go build cache
         uses: actions/cache@v2
