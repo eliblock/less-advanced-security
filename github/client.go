@@ -3,7 +3,7 @@ package github
 import (
 	"net/http"
 
-	"github.com/bradleyfalzon/ghinstallation"
+	"github.com/bradleyfalzon/ghinstallation/v2"
 	"github.com/google/go-github/v47/github"
 	"github.com/pkg/errors"
 )
