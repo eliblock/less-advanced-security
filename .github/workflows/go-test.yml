@@ -14,13 +14,31 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: get go version
+        id: get-go-version
         run: |
-          go_version=$(head -n 3 go.mod | tail -n 1 | cut -d ' ' -f 2)
-          echo "go_version=${go_version}" >> $GITHUB_ENV
+          echo "::set-output name=go-version::$(head -n 3 go.mod | tail -n 1 | cut -d ' ' -f 2)"
 
       - uses: actions/setup-go@v3
         with:
-          go-version: ${{ env.go_version }}
+          go-version: ${{ steps.get-go-version.outputs.go-version }}
+
+      - name: get go caches
+        id: get-go-caches
+        run: |
+          echo "::set-output name=go-build::$(go env GOCACHE)"
+          echo "::set-output name=go-mod::$(go env GOMODCACHE)"
+
+      - name: go build cache
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.get-go-caches.outputs.go-build }}
+          key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.sum') }}
+
+      - name: go mod cache
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.get-go-caches.outputs.go-mod }}
+          key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
 
       - run: go build -v ./...
 
