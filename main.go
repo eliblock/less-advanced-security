@@ -2,12 +2,17 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"less-advanced-security/github"
 	"less-advanced-security/sarif"
 	"log"
 	"strings"
 
 	"github.com/pkg/errors"
+)
+
+var (
+	version = "dev"
 )
 
 func resultToAnnotation(result sarif.Result) (*github.Annotation, error) {
@@ -30,6 +35,8 @@ func resultToAnnotation(result sarif.Result) (*github.Annotation, error) {
 }
 
 func main() {
+	versionFlag := flag.Bool("version", false, "")
+
 	repo := flag.String("repo", "", "repo in the form ownerName/repoName")
 	sha := flag.String("sha", "", "SHA of the commit to annotate")
 	prNumber := flag.Int("pr", -1, "id of pr to annotate")
@@ -43,6 +50,11 @@ func main() {
 	filterAnnotations := flag.Bool("filter_annotations", true, "filter annotations by lines found in the git patches, default true")
 
 	flag.Parse()
+
+	if *versionFlag {
+		fmt.Printf("%s\n", version)
+		return
+	}
 
 	parsedRepo := strings.Split(*repo, "/")
 
