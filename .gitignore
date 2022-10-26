@@ -1,5 +1,6 @@
 # Package specific additions
 tmp/
+.DS_Store
 
 # Binaries for programs and plugins
 *.exe
@@ -17,4 +18,5 @@ tmp/
 # Go workspace file
 go.work
 
+# goreleaser
 dist/

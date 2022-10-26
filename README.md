@@ -6,6 +6,27 @@ Less Advanced Security is... less advanced. It enables you to bring-your-own PR 
 
 GitHub Advanced Security charges a per-active-commiter seat license of ~$600/yr. Less Advanced Security is free (bring your own compute, config, and maintenance).
 
+## Sample Usage
+
+### Code annotations
+
+Annotations are added to the pull request file page marking the line(s) impacted. Annotations may be notices, warnings, or failures.
+
+![A Rails config which sets force_ssl to false. The line of code is annotated with an error from Brakeman.](docs/img/brakeman/annotation-brake0109.png)
+
+![A Python code snippet which uses the method `print`. The line of code is annotated with a warning from Semgrep.](docs/img/semgrep/annotation-no_print.png)
+
+### Commit (and PR) status checks
+
+A check is added to the commit (and pull request) denoting the status of the most severe annotation. Failures result in a failing check, warnings result in a pending check, notices result in a passing check.
+
+![The GitHub checks modal showing a failing check called `Brakeman`.](docs/img/brakeman/status-fail.png)
+
+### Finding summaries
+
+All annotations are summarized on the PR's checks page.
+
+![A GitHub check summary page showing one finding from Semgrep.](docs/img/semgrep/check-summary.png)
 ## Setup
 
 ### GitHub Application
@@ -42,15 +63,21 @@ Run your sarif-producing scan, writing the sarif file to disk.
 
 Then run
 ```sh
-less-advanced-security -app_id=<app_id> -install_id=<installation_id> -key_path=<path_to_key> -sha=<sha_of_target_commit> -repo=<repo_owner>/<repo_name> -pr=<pr_number> -sarif_path=<path_to_sarif_file>
+less-advanced-security --app_id=<app_id> --install_id=<installation_id> --key_path=<path_to_key> --sha=<sha_of_target_commit> --repo=<repo_owner>/<repo_name> --pr=<pr_number> --sarif_path=<path_to_sarif_file>
 ```
 
 For example:
 
 ```sh
-less-advanced-security -app_id=12345 -install_id=87654321 -key_path=tmp/application_private_key.pem -sha=ee5dabb638b6b874c42bc3c915cf94d4b6b346b6 -repo=eliblock/less-advanced-security -pr=57 -sarif_path=/tmp/scan-results/sarif.json
+less-advanced-security --app_id=12345 --install_id=87654321 --key_path=tmp/application_private_key.pem --sha=ee5dabb638b6b874c42bc3c915cf94d4b6b346b6 --repo=eliblock/less-advanced-security --pr=57 --sarif_path=/tmp/scan-results/sarif.json
 ```
 
+### Configuration
+
+#### `--filter_annotations`
+Defaults to `True` (disable with `--filter_annotations=false`).
+
+When set to `True`, annotations are added only when they apply to a line modified in the pull request (or a line immediately around it based on the git patch). When set to `False`, all annotations are added regardless of file or line.
 ## Development
 
 ### Environment
