@@ -45,14 +45,16 @@ func ParseFromFile(path string) (*Tool, []*Result, error) {
 
 	ruleid_to_level := map[string]string{}
 	for _, rule := range run.Tool.Driver.Rules {
-		ruleid_to_level[rule.ID] = fmt.Sprintf("%v", rule.DefaultConfiguration.Level)
+		if rule.DefaultConfiguration != nil && rule.DefaultConfiguration.Level != nil {
+			ruleid_to_level[rule.ID] = fmt.Sprintf("%v", rule.DefaultConfiguration.Level)
+		}
 	}
 
 	results := []*Result{}
 	for _, result := range run.Results {
 		raw, _ := json.Marshal(result)
-		var locations []ResultLocation
 
+		var locations []ResultLocation
 		for _, location := range result.Locations {
 			if location.PhysicalLocation == nil || location.PhysicalLocation.ArtifactLocation == nil {
 				continue
@@ -69,12 +71,20 @@ func ParseFromFile(path string) (*Tool, []*Result, error) {
 				EndLine:   endLine,
 			})
 		}
+
+		var level string
+		if result.Level != nil {
+			level = *result.Level
+		} else {
+			level = ruleid_to_level[*result.RuleID]
+		}
+
 		results = append(results, &Result{
 			Message:   *result.Message.Text,
 			RuleID:    *result.RuleID,
 			Raw:       string(raw),
 			Locations: locations,
-			Level:     ruleid_to_level[*result.RuleID],
+			Level:     level,
 		})
 
 	}
