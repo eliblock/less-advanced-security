@@ -11,15 +11,18 @@ GitHub Advanced Security charges a per-active-commiter seat license of ~$600/yr.
 ### GitHub Application
 
 1. [Create a GitHub App](https://docs.github.com/en/developers/apps/building-github-apps/creating-a-github-app) for your user or org.
+    * The `GitHub App name` will be visible when `less-advanced-security` runs. Choose something succinct.
+    * Set `Homepage URL` will be visible on the checks page. Choose a useful doc for your org (or use this repo's URL).
+    * Set `Webhook` to `Active`, but configure a nonsense URL (like `https://github.com/<your_user>/dev/null`) for the destination.
     * Set the following permissions:
         * `Repository permissions > Checks > Access: Read and write`
-        * `Repository permissions > Pull requests > Access: Read and write`
+        * `Repository permissions > Pull requests > Access: Read-only`
+    * For `Where can this GitHub App be installed?` select `Only on this account`.
     * Note the `App Id` for later.
-    * Enable webhook events on installation, but submit a nonsense URL (like `https://github.com/<your_user>/dev/null`) for the destination.
-1. [Install the GitHub App](https://docs.github.com/en/developers/apps/managing-github-apps/installing-github-apps), granting it access to the relevant repos.
-    * Note the `Install Id` for later. To do this, return to your app configuration, look at `Advanced` settings, find the failed webhook delivery, and look at the payload.
 1. [Generate a private key](https://docs.github.com/en/developers/apps/building-github-apps/authenticating-with-github-apps) and save it locally.
     * Note the path to the key for later.
+1. [Install the GitHub App](https://docs.github.com/en/developers/apps/managing-github-apps/installing-github-apps), granting it access to the relevant repos.
+    * Note the `installation.id` for later. To do this, return to your app configuration, look at `Advanced` settings, find the failed webhook delivery, and look at the payload.
 
 ### Installation
 
@@ -39,7 +42,7 @@ Run your sarif-producing scan, writing the sarif file to disk.
 
 Then run
 ```sh
-less-advanced-security -app_id=<app_id> -install_id=<install_id> -key_path=<path_to_key> -sha=<sha_of_target_commit> -repo=<repo_owner>/<repo_name> -pr=<pr_number> -sarif_path=<path_to_sarif_file>
+less-advanced-security -app_id=<app_id> -install_id=<installation_id> -key_path=<path_to_key> -sha=<sha_of_target_commit> -repo=<repo_owner>/<repo_name> -pr=<pr_number> -sarif_path=<path_to_sarif_file>
 ```
 
 For example:
