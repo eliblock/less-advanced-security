@@ -67,11 +67,20 @@ func (annotator *PullRequestAnnotator) PostAnnotations(annotations []*Annotation
 	check_title := fmt.Sprintf("Findings for %s", checkName)
 	summary := fmt.Sprintf("A set of findings for %s on commit %s.", checkName, annotator.pr.headSHA)
 
+	var first_annotations []*github.CheckRunAnnotation = nil
+	if len(chunkedGitHubAnnotations) == 1 {
+		first_annotations = chunkedGitHubAnnotations[0]
+		chunkedGitHubAnnotations = nil
+	} else if (len(chunkedGitHubAnnotations)) > 1 {
+		first_annotations = chunkedGitHubAnnotations[0]
+		chunkedGitHubAnnotations = chunkedGitHubAnnotations[1:]
+	}
+
 	output := github.CheckRunOutput{
 		Title:   &check_title,
 		Summary: &summary,
 
-		Annotations: chunkedGitHubAnnotations[0],
+		Annotations: first_annotations,
 	}
 
 	conclusion := computeConclusion(annotations)
@@ -88,8 +97,7 @@ func (annotator *PullRequestAnnotator) PostAnnotations(annotations []*Annotation
 		return errors.Wrap(err, "failed to create check run")
 	}
 
-	for i, annotationChunk := range chunkedGitHubAnnotations[1:] {
-		fmt.Printf("Dealing with page %d on %v: %v\n", i+2, checkRun.GetID(), *annotationChunk[0].Message)
+	for i, annotationChunk := range chunkedGitHubAnnotations {
 		output := github.CheckRunOutput{
 			Title:   &check_title, // required, even though there is no update
 			Summary: &summary,     // required, even though there is no update
