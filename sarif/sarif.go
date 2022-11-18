@@ -3,6 +3,7 @@ package sarif
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/owenrumney/go-sarif/sarif"
 	"github.com/pkg/errors"
@@ -27,6 +28,15 @@ type ResultLocation struct {
 }
 
 func ParseFromFile(path string) (*Tool, []*Result, error) {
+	if _, err := os.Stat(path); err != nil && os.IsNotExist(err) {
+		return nil, nil, errors.Errorf("no file exists at %q", path)
+	}
+
+	// Files which _exist_ but are _empty_ should be treated as if they contained {}
+	if info, _ := os.Stat(path); info.Size() == 0 {
+		return nil, nil, nil
+	}
+
 	report, err := sarif.Open(path)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "failed to load sarif file")

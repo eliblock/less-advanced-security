@@ -63,6 +63,11 @@ func main() {
 		log.Fatal(errors.Wrap(err, "failed to load sarif file"))
 	}
 
+	if len(results) == 0 {
+		log.Println("No findings to post.")
+		return
+	}
+
 	annotator, err := github.CreatePullRequestAnnotator(
 		github.ClientConfiguration{AppID: int64(*appID), InstallationID: int64(*installID), AppKeyPath: *appKeyPath},
 		github.PullRequestConfiguration{Owner: parsedRepo[0], Repo: parsedRepo[1], Number: *prNumber},
