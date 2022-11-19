@@ -62,6 +62,10 @@ func ParseFromFile(path string) (*Tool, []*Result, error) {
 
 	results := []*Result{}
 	for _, result := range run.Results {
+		if len(result.Suppressions) > 0 {
+			continue
+		}
+
 		raw, _ := json.Marshal(result)
 
 		var locations []ResultLocation
