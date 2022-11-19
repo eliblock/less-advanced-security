@@ -48,6 +48,7 @@ func main() {
 	sarifPath := flag.String("sarif_path", "", "absolute path to your sarif file")
 
 	filterAnnotations := flag.Bool("filter_annotations", true, "filter annotations by lines found in the git patches, default true")
+	annotateStartLineOnly := flag.Bool("annotate_beginning", true, "force annotations to start line of a finding (if set to false, GitHub default of end is used), default true")
 
 	flag.Parse()
 
@@ -89,7 +90,7 @@ func main() {
 		annotations = append(annotations, annotation)
 	}
 
-	if err := annotator.PostAnnotations(annotations, tool.Name, *filterAnnotations); err != nil {
+	if err := annotator.PostAnnotations(annotations, tool.Name, *filterAnnotations, *annotateStartLineOnly); err != nil {
 		log.Fatal(errors.Wrap(err, "failed to post annotations"))
 	}
 }

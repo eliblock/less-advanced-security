@@ -42,9 +42,13 @@ func computeConclusion(annotations []*Annotation) string {
 	return conclusion
 }
 
-func (annotator *PullRequestAnnotator) PostAnnotations(annotations []*Annotation, checkName string, filterAnnotations bool) error {
+func (annotator *PullRequestAnnotator) PostAnnotations(annotations []*Annotation, checkName string, filterAnnotations bool, annotateStartLineOnly bool) error {
 	if filterAnnotations {
 		annotations = annotator.pr.filterAnnotations(annotations)
+	}
+
+	if annotateStartLineOnly {
+		removeEndLines(annotations)
 	}
 
 	const MAX_ANNOTATIONS_PER_PAGE = 50

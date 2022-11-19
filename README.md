@@ -78,6 +78,12 @@ less-advanced-security --app_id=12345 --install_id=87654321 --key_path=tmp/appli
 Defaults to `True` (disable with `--filter_annotations=false`).
 
 When set to `True`, annotations are added only when they apply to a line modified in the pull request (or a line immediately around it based on the git patch). When set to `False`, all annotations are added regardless of file or line.
+
+### `--annotate_beginning`
+Defaults to `True` (disable with `--annotate_beginning=false`).
+
+When set to `True`, annotations are submitted for the start line of a finding only (rather than the full range of lines in the finding). With this set to `False`, GitHub's default of displaying annotations on the end line of a finding is used.
+
 ## Development
 
 ### Environment

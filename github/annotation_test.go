@@ -99,3 +99,72 @@ func TestCreateAnnotation(t *testing.T) {
 	})
 
 }
+
+func TestRemoveEndLines(t *testing.T) {
+	six := 6
+	seven := 7
+	twelve := 12
+
+	one_line_annotation := Annotation{
+		startLine:        6,
+		endLine:          6,
+		githubAnnotation: &github.CheckRunAnnotation{StartLine: &six, EndLine: &six},
+	}
+	multi_line_annotation := Annotation{
+		startLine:        7,
+		endLine:          12,
+		githubAnnotation: &github.CheckRunAnnotation{StartLine: &seven, EndLine: &twelve},
+	}
+	flattened_multi_line_annotation := Annotation{
+		startLine:        7,
+		endLine:          7,
+		githubAnnotation: &github.CheckRunAnnotation{StartLine: &seven, EndLine: &seven},
+	}
+
+	tests := []struct {
+		name                             string
+		annotations, expectedAnnotations []*Annotation
+	}{
+		{
+			"one one-liner",
+			[]*Annotation{&one_line_annotation},
+			[]*Annotation{&one_line_annotation},
+		},
+		{
+			"one multi-liner",
+			[]*Annotation{&multi_line_annotation},
+			[]*Annotation{&flattened_multi_line_annotation},
+		},
+		{
+			"multiple",
+			[]*Annotation{&one_line_annotation, &multi_line_annotation},
+			[]*Annotation{&one_line_annotation, &flattened_multi_line_annotation},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			removeEndLines(tt.annotations)
+
+			for _, expectedAnnotation := range tt.expectedAnnotations {
+				found := false
+				for _, gotAnnotation := range tt.annotations {
+					if gotAnnotation.startLine == expectedAnnotation.startLine &&
+						gotAnnotation.endLine == expectedAnnotation.endLine &&
+						*gotAnnotation.githubAnnotation.StartLine == *expectedAnnotation.githubAnnotation.StartLine &&
+						*gotAnnotation.githubAnnotation.EndLine == *expectedAnnotation.githubAnnotation.EndLine &&
+						gotAnnotation.githubAnnotation.EndColumn == nil {
+						found = true
+						break
+					}
+				}
+				if !found {
+					t.Errorf("Expected annotation %s but did not find it.", expectedAnnotation)
+				}
+			}
+
+			if len(tt.expectedAnnotations) != len(tt.annotations) {
+				t.Errorf("expected %d annotations but got %d", len(tt.expectedAnnotations), len(tt.annotations))
+			}
+		})
+	}
+}

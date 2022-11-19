@@ -64,3 +64,11 @@ func CreateAnnotation(path string, startLine int, endLine int, level string, tit
 		endLine:   endLine,
 	}, nil
 }
+
+func removeEndLines(annotations []*Annotation) {
+	for _, annotation := range annotations {
+		annotation.endLine = annotation.startLine
+		annotation.githubAnnotation.EndLine = annotation.githubAnnotation.StartLine
+		annotation.githubAnnotation.EndColumn = nil
+	}
+}
