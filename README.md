@@ -79,10 +79,15 @@ Defaults to `True` (disable with `--filter_annotations=false`).
 
 When set to `True`, annotations are added only when they apply to a line modified in the pull request (or a line immediately around it based on the git patch). When set to `False`, all annotations are added regardless of file or line.
 
-### `--annotate_beginning`
+#### `--annotate_beginning`
 Defaults to `True` (disable with `--annotate_beginning=false`).
 
 When set to `True`, annotations are submitted for the start line of a finding only (rather than the full range of lines in the finding). With this set to `False`, GitHub's default of displaying annotations on the end line of a finding is used.
+
+#### `--check_name`
+Defaults to the tool driver name from the submitted sarif (override with `--check_name "Override name of check"`).
+
+When set to any string, the GitHub check is named that string (rather than the name of the tool which reported the results). Use this configuration in the event that the same tool powers multiple checks on your PR.
 
 ## Development
 
