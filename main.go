@@ -46,6 +46,7 @@ func main() {
 	appKeyPath := flag.String("key_path", "", "absolute path to your GitHub app's private key")
 
 	sarifPath := flag.String("sarif_path", "", "absolute path to your sarif file")
+	checkNameOverride := flag.String("check_name", "", "name of the check, defaults to tool name from sarif")
 
 	filterAnnotations := flag.Bool("filter_annotations", true, "filter annotations by lines found in the git patches, default true")
 	annotateStartLineOnly := flag.Bool("annotate_beginning", true, "force annotations to start line of a finding (if set to false, GitHub default of end is used), default true")
@@ -90,7 +91,12 @@ func main() {
 		annotations = append(annotations, annotation)
 	}
 
-	if err := annotator.PostAnnotations(annotations, tool.Name, *filterAnnotations, *annotateStartLineOnly); err != nil {
+	checkName := tool.Name
+	if *checkNameOverride != "" {
+		checkName = *checkNameOverride
+	}
+
+	if err := annotator.PostAnnotations(annotations, checkName, *filterAnnotations, *annotateStartLineOnly); err != nil {
 		log.Fatal(errors.Wrap(err, "failed to post annotations"))
 	}
 }
