@@ -18,7 +18,7 @@ jobs:
         run: |
           echo "go-version=$(head -n 3 go.mod | tail -n 1 | cut -d ' ' -f 2)" >> $GITHUB_OUTPUT
 
-      - uses: actions/setup-go@v3
+      - uses: actions/setup-go@v4
         with:
           go-version: ${{ steps.get-go-version.outputs.go-version }}
 
