@@ -48,10 +48,6 @@ func TestLevelStringToNormalizedLevelErrors(t *testing.T) {
 	}
 }
 
-func (a Annotation) String() string {
-	return fmt.Sprintf("{\"fileName\":%q,\"level\":%d,\"startLine\":%d,\"endLine\":%d,\"githubAnnotation\":\"...\"}", a.fileName, a.level, a.startLine, a.endLine)
-}
-
 func compareAnnotation(t *testing.T, expected, received *Annotation) {
 	t.Helper()
 

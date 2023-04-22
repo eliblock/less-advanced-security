@@ -1,6 +1,8 @@
 package github
 
 import (
+	"fmt"
+
 	"github.com/google/go-github/v47/github"
 	"github.com/pkg/errors"
 )
@@ -16,6 +18,18 @@ type Annotation struct {
 	fileName           string
 	startLine, endLine int
 	level              int
+}
+
+func (a Annotation) String() string {
+	checkRunAnnotationString := "{}"
+	if a.githubAnnotation != nil {
+		checkRunAnnotationString = checkRunAnnotationAsString(a.githubAnnotation)
+	}
+	return fmt.Sprintf("{\"fileName\":%q,\"level\":%d,\"startLine\":%d,\"endLine\":%d,\"githubAnnotation\":%s}", a.fileName, a.level, a.startLine, a.endLine, checkRunAnnotationString)
+}
+
+func checkRunAnnotationAsString(a *github.CheckRunAnnotation) string {
+	return fmt.Sprintf("{\"path\":%s,\"message\":%s,\"title\":%s,\"...\":\"...\"}", *a.Path, *a.Message, *a.Title)
 }
 
 // map sarif levels (https://docs.oasis-open.org/sarif/sarif/v2.0/sarif-v2.0.html#_Ref508894469) to GitHub levels
