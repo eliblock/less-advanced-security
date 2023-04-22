@@ -89,6 +89,8 @@ func TestSarifToAnnotationConverter(t *testing.T) {
 func TestSarifsToAnnotationsConverter(t *testing.T) {
 	five, six, ten := 5, 6, 10
 
+	sarifWithNoLocation := sarif.Result{Locations: []sarif.ResultLocation{}}
+
 	sarifOriginal := sarif.Result{
 		Message: "this is a failure",
 		RuleID:  "fail-1-2-3",
@@ -150,55 +152,66 @@ func TestSarifsToAnnotationsConverter(t *testing.T) {
 		name                string
 		results             []*sarif.Result
 		expectedAnnotations []*github.Annotation
+		errMessage          string
 	}{
 		{
+			"no locations",
+			[]*sarif.Result{&sarifWithNoLocation},
+			[]*github.Annotation{},
+			"failed to normalize result: each result must have 1 location, not 0",
+		}, {
 			"two results",
 			[]*sarif.Result{&sarifOriginal, &sarifAsWarning},
 			[]*github.Annotation{annotationOriginal, annotationAsWarning},
-		},
-		{
+			"",
+		}, {
 			"two sets of duplicate results",
 			[]*sarif.Result{&sarifOriginal, &sarifAsWarning, &sarifOriginal, &sarifAsWarning},
 			[]*github.Annotation{annotationOriginalReportedTwice, annotationAsWarningReportedTwice},
-		},
-		{
+			"",
+		}, {
 			"not duplicated due to start line",
 			[]*sarif.Result{&sarifOriginal, &sarifNewStartLine},
 			[]*github.Annotation{annotationOriginal, annotationNewStartLine},
-		},
-		{
+			"",
+		}, {
 			"not duplicated due to end line",
 			[]*sarif.Result{&sarifOriginal, &sarifNewEndLine},
 			[]*github.Annotation{annotationOriginal, annotationNewEndLine},
-		},
-		{
+			"",
+		}, {
 			"not duplicated due to id",
 			[]*sarif.Result{&sarifOriginal, &sarifNewId},
 			[]*github.Annotation{annotationOriginal, annotationNewId},
+			"",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			gotAnnotations, err := resultsToAnnotations(tt.results)
-			if err != nil {
+			if tt.errMessage != "" {
+				if err == nil || err.Error() != tt.errMessage {
+					t.Errorf("Expected error %q but got %q.", tt.errMessage, err)
+				}
+			} else if err != nil {
 				t.Errorf("Expected no error but got %q.", err)
-				t.FailNow()
-			}
-			for _, expectedAnnotation := range tt.expectedAnnotations {
-				found := false
-				for _, gotAnnotation := range gotAnnotations {
-					if reflect.DeepEqual(gotAnnotation, expectedAnnotation) {
-						found = true
-						break
+			} else {
+				for _, expectedAnnotation := range tt.expectedAnnotations {
+					found := false
+					for _, gotAnnotation := range gotAnnotations {
+						if reflect.DeepEqual(gotAnnotation, expectedAnnotation) {
+							found = true
+							break
+						}
+					}
+					if !found {
+						t.Errorf("Expected annotation %s but did not find it.", expectedAnnotation)
 					}
 				}
-				if !found {
-					t.Errorf("Expected annotation %s but did not find it.", expectedAnnotation)
-				}
-			}
 
-			if len(tt.expectedAnnotations) != len(gotAnnotations) {
-				t.Errorf("expected %d annotations but got %d", len(tt.expectedAnnotations), len(gotAnnotations))
+				if len(tt.expectedAnnotations) != len(gotAnnotations) {
+					t.Errorf("expected %d annotations but got %d", len(tt.expectedAnnotations), len(gotAnnotations))
+				}
 			}
 		})
 	}
