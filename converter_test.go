@@ -147,9 +147,9 @@ func TestSarifsToAnnotationsConverter(t *testing.T) {
 	annotationNewEndLine, _ := github.CreateAnnotation("test/file", five, ten, "error", "new-id-3", "this is a failure", "raw failure text")
 
 	tests := []struct {
-		name        string
-		results     []*sarif.Result
-		annotations []*github.Annotation
+		name                string
+		results             []*sarif.Result
+		expectedAnnotations []*github.Annotation
 	}{
 		{
 			"two results",
@@ -179,11 +179,26 @@ func TestSarifsToAnnotationsConverter(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := resultsToAnnotations(tt.results)
+			gotAnnotations, err := resultsToAnnotations(tt.results)
 			if err != nil {
 				t.Errorf("Expected no error but got %q.", err)
-			} else if !reflect.DeepEqual(got, tt.annotations) {
-				t.Errorf("Expected annotations %s but got %q.", tt.annotations, got)
+				t.FailNow()
+			}
+			for _, expectedAnnotation := range tt.expectedAnnotations {
+				found := false
+				for _, gotAnnotation := range gotAnnotations {
+					if reflect.DeepEqual(gotAnnotation, expectedAnnotation) {
+						found = true
+						break
+					}
+				}
+				if !found {
+					t.Errorf("Expected annotation %s but did not find it.", expectedAnnotation)
+				}
+			}
+
+			if len(tt.expectedAnnotations) != len(gotAnnotations) {
+				t.Errorf("expected %d annotations but got %d", len(tt.expectedAnnotations), len(gotAnnotations))
 			}
 		})
 	}
