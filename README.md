@@ -107,6 +107,6 @@ go test -v ./...
 brew install goreleaser
 git tag v0.1.0 # update for your version
 git push origin v0.1.0 # update for your version
-goreleaser release --rm-dist --snapshot # remove --snapshot for a full release
+goreleaser release --clean --snapshot # remove --snapshot for a full release
 # complete the release on GitHub
 ```
