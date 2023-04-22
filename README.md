@@ -16,6 +16,8 @@ Annotations are added to the pull request file page marking the line(s) impacted
 
 ![A Python code snippet which uses the method `print`. The line of code is annotated with a warning from Semgrep.](docs/img/semgrep/annotation-no_print.png)
 
+If a finding is reported multiple times in the input sarif (same file, lines, finding id, and level), `less-advanced-security` will deduplicate these and post only one annotation.
+
 ### Commit (and PR) status checks
 
 A check is added to the commit (and pull request) denoting the status of the most severe annotation. Failures result in a failing check, warnings result in a pending check, notices result in a passing check.
