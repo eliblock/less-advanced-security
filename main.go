@@ -60,16 +60,9 @@ func main() {
 		log.Fatal(errors.Wrap(err, "failed during setup"))
 	}
 
-	annotations := []*github.Annotation{}
-	for _, result := range results {
-		if result == nil {
-			continue
-		}
-		annotation, err := resultToAnnotation(*result)
-		if err != nil {
-			log.Fatal(errors.Wrap(err, "failed to normalize result"))
-		}
-		annotations = append(annotations, annotation)
+	annotations, err := resultsToAnnotations(results)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "failed to convert results to annotations"))
 	}
 
 	checkName := tool.Name

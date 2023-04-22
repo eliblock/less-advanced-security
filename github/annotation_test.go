@@ -36,6 +36,73 @@ func TestLevelStringToNormalizedLevel(t *testing.T) {
 	}
 }
 
+func TestAnnotationHash(t *testing.T) {
+	tests := []struct {
+		name       string
+		annotation Annotation
+		hash       string
+	}{
+		{
+			"simple",
+			Annotation{fileName: "test/file", startLine: 5, endLine: 5, level: noticeLevel, githubAnnotation: &github.CheckRunAnnotation{Title: github.String("something bad")}},
+			"e7a950b00fee4a748050a65b913703b4",
+		}, {
+			"new start line",
+			Annotation{fileName: "test/file", startLine: 4, endLine: 5, level: noticeLevel, githubAnnotation: &github.CheckRunAnnotation{Title: github.String("something bad")}},
+			"5db942512fd238aef81561427f8a9114",
+		}, {
+			"new end line",
+			Annotation{fileName: "test/file", startLine: 5, endLine: 6, level: noticeLevel, githubAnnotation: &github.CheckRunAnnotation{Title: github.String("something bad")}},
+			"be58c0b17236dcbdce4f1f6adda85523",
+		}, {
+			"new message",
+			Annotation{fileName: "test/file", startLine: 5, endLine: 5, level: noticeLevel, githubAnnotation: &github.CheckRunAnnotation{Title: github.String("something somewhat bad")}},
+			"3db8d84254a373e79261082972521974",
+		}, {
+			"new level",
+			Annotation{fileName: "test/file", startLine: 5, endLine: 6, level: warningLevel, githubAnnotation: &github.CheckRunAnnotation{Title: github.String("something bad")}},
+			"30ccf9386b64b10113362e0dd5e1ddbe",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := fmt.Sprintf("%x", tt.annotation.Hash()); got != tt.hash {
+				t.Errorf("expected hash %s but received %s", tt.hash, got)
+			}
+		})
+	}
+}
+
+func TestAnnotationAppendReportCount(t *testing.T) {
+	tests := []struct {
+		name          string
+		annotation    Annotation
+		reportCount   int
+		expectedTitle string
+	}{
+		{
+			"no change",
+			Annotation{fileName: "test/file", startLine: 5, endLine: 5, level: noticeLevel, githubAnnotation: &github.CheckRunAnnotation{Title: github.String("something bad")}},
+			1,
+			"something bad",
+		}, {
+			"15 times",
+			Annotation{fileName: "test/file", startLine: 5, endLine: 5, level: noticeLevel, githubAnnotation: &github.CheckRunAnnotation{Title: github.String("something bad")}},
+			15,
+			"something bad (reported 15 times)",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.annotation.MaybeAppendReportCount(tt.reportCount)
+
+			if tt.expectedTitle != *tt.annotation.githubAnnotation.Title {
+				t.Errorf("expected annotation title to be %s but it was %s", tt.expectedTitle, *tt.annotation.githubAnnotation.Title)
+			}
+		})
+	}
+}
+
 func TestLevelStringToNormalizedLevelErrors(t *testing.T) {
 	tests := []string{"nil", "null", "info", "notice", "warn", "failure"}
 	for _, tt_in := range tests {

@@ -1,6 +1,7 @@
 package github
 
 import (
+	"crypto/md5"
 	"fmt"
 
 	"github.com/google/go-github/v47/github"
@@ -26,6 +27,21 @@ func (a Annotation) String() string {
 		checkRunAnnotationString = checkRunAnnotationAsString(a.githubAnnotation)
 	}
 	return fmt.Sprintf("{\"fileName\":%q,\"level\":%d,\"startLine\":%d,\"endLine\":%d,\"githubAnnotation\":%s}", a.fileName, a.level, a.startLine, a.endLine, checkRunAnnotationString)
+}
+
+func (a Annotation) Hash() [16]byte {
+	return md5.Sum([]byte(fmt.Sprintf("%d-%d-%s-%s-%d", a.startLine, a.endLine, a.fileName, *a.githubAnnotation.Title, a.level)))
+}
+
+func (a *Annotation) MaybeAppendReportCount(reportCount int) {
+	/*
+	* Call only once per annotation - if this is called multiple times, the report
+	* count will be repeatedly appended.
+	 */
+	if reportCount > 1 {
+		newTitle := fmt.Sprintf("%s (reported %d times)", *a.githubAnnotation.Title, reportCount)
+		a.githubAnnotation.Title = &newTitle
+	}
 }
 
 func checkRunAnnotationAsString(a *github.CheckRunAnnotation) string {

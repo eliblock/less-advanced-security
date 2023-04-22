@@ -85,3 +85,106 @@ func TestSarifToAnnotationConverter(t *testing.T) {
 		})
 	}
 }
+
+func TestSarifsToAnnotationsConverter(t *testing.T) {
+	five, six, ten := 5, 6, 10
+
+	sarifOriginal := sarif.Result{
+		Message: "this is a failure",
+		RuleID:  "fail-1-2-3",
+		Raw:     "raw failure text",
+		Level:   "error",
+		Locations: []sarif.ResultLocation{
+			sarif.ResultLocation{Filepath: "test/file", StartLine: &five}},
+	}
+	// accuracy of annotation creation tested elsewhere
+	annotationOriginal, _ := github.CreateAnnotation("test/file", five, five, "error", "fail-1-2-3", "this is a failure", "raw failure text")
+	annotationOriginalReportedTwice, _ := github.CreateAnnotation("test/file", five, five, "error", "fail-1-2-3 (reported 2 times)", "this is a failure", "raw failure text")
+
+	sarifAsWarning := sarif.Result{
+		Message: "this is a failure",
+		RuleID:  "fail-1-2-3",
+		Raw:     "raw failure text",
+		Level:   "warning",
+		Locations: []sarif.ResultLocation{
+			sarif.ResultLocation{Filepath: "test/file", StartLine: &five}},
+	}
+	// accuracy of annotation creation tested elsewhere
+	annotationAsWarning, _ := github.CreateAnnotation("test/file", five, five, "warning", "fail-1-2-3", "this is a failure", "raw failure text")
+	annotationAsWarningReportedTwice, _ := github.CreateAnnotation("test/file", five, five, "warning", "fail-1-2-3 (reported 2 times)", "this is a failure", "raw failure text")
+
+	sarifNewId := sarif.Result{
+		Message: "this is a failure",
+		RuleID:  "new-id-3",
+		Raw:     "raw failure text",
+		Level:   "error",
+		Locations: []sarif.ResultLocation{
+			sarif.ResultLocation{Filepath: "test/file", StartLine: &five}},
+	}
+	// accuracy of annotation creation tested elsewhere
+	annotationNewId, _ := github.CreateAnnotation("test/file", five, five, "error", "new-id-3", "this is a failure", "raw failure text")
+
+	sarifNewStartLine := sarif.Result{
+		Message: "this is a failure",
+		RuleID:  "new-id-3",
+		Raw:     "raw failure text",
+		Level:   "error",
+		Locations: []sarif.ResultLocation{
+			sarif.ResultLocation{Filepath: "test/file", StartLine: &six}},
+	}
+	// accuracy of annotation creation tested elsewhere
+	annotationNewStartLine, _ := github.CreateAnnotation("test/file", six, six, "error", "new-id-3", "this is a failure", "raw failure text")
+
+	sarifNewEndLine := sarif.Result{
+		Message: "this is a failure",
+		RuleID:  "new-id-3",
+		Raw:     "raw failure text",
+		Level:   "error",
+		Locations: []sarif.ResultLocation{
+			sarif.ResultLocation{Filepath: "test/file", StartLine: &five, EndLine: &ten}},
+	}
+	// accuracy of annotation creation tested elsewhere
+	annotationNewEndLine, _ := github.CreateAnnotation("test/file", five, ten, "error", "new-id-3", "this is a failure", "raw failure text")
+
+	tests := []struct {
+		name        string
+		results     []*sarif.Result
+		annotations []*github.Annotation
+	}{
+		{
+			"two results",
+			[]*sarif.Result{&sarifOriginal, &sarifAsWarning},
+			[]*github.Annotation{annotationOriginal, annotationAsWarning},
+		},
+		{
+			"two sets of duplicate results",
+			[]*sarif.Result{&sarifOriginal, &sarifAsWarning, &sarifOriginal, &sarifAsWarning},
+			[]*github.Annotation{annotationOriginalReportedTwice, annotationAsWarningReportedTwice},
+		},
+		{
+			"not duplicated due to start line",
+			[]*sarif.Result{&sarifOriginal, &sarifNewStartLine},
+			[]*github.Annotation{annotationOriginal, annotationNewStartLine},
+		},
+		{
+			"not duplicated due to end line",
+			[]*sarif.Result{&sarifOriginal, &sarifNewEndLine},
+			[]*github.Annotation{annotationOriginal, annotationNewEndLine},
+		},
+		{
+			"not duplicated due to id",
+			[]*sarif.Result{&sarifOriginal, &sarifNewId},
+			[]*github.Annotation{annotationOriginal, annotationNewId},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := resultsToAnnotations(tt.results)
+			if err != nil {
+				t.Errorf("Expected no error but got %q.", err)
+			} else if !reflect.DeepEqual(got, tt.annotations) {
+				t.Errorf("Expected annotations %s but got %q.", tt.annotations, got)
+			}
+		})
+	}
+}
