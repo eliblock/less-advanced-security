@@ -72,7 +72,7 @@ func levelStringToNormalizedLevel(level string) (normalizedLevel int, normalized
 	return
 }
 
-func CreateAnnotation(path string, startLine int, endLine int, level string, title string, message string, details string) (*Annotation, error) {
+func CreateAnnotation(path string, startLine int, endLine int, level string, title string, message string) (*Annotation, error) {
 	normalizedLevel, normalizedLevelString, err := levelStringToNormalizedLevel(level)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to normalize level")
@@ -86,7 +86,6 @@ func CreateAnnotation(path string, startLine int, endLine int, level string, tit
 			Title:           &title,
 			Message:         &message,
 			AnnotationLevel: &normalizedLevelString,
-			RawDetails:      &details,
 		},
 		level:     normalizedLevel,
 		fileName:  path,

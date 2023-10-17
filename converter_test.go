@@ -20,7 +20,7 @@ func TestSarifToAnnotationConverter(t *testing.T) {
 			sarif.ResultLocation{Filepath: "test/file", StartLine: &five}},
 	}
 	// accuracy of annotation creation tested elsewhere
-	annotationWithStartLine, _ := github.CreateAnnotation("test/file", five, five, "error", "fail-1-2-3", "this is a failure", "raw failure text")
+	annotationWithStartLine, _ := github.CreateAnnotation("test/file", five, five, "error", "fail-1-2-3", "this is a failure")
 
 	sarifWithStartAndEndLine := sarif.Result{
 		Message: "this is a failure",
@@ -31,7 +31,7 @@ func TestSarifToAnnotationConverter(t *testing.T) {
 			sarif.ResultLocation{Filepath: "test/file", StartLine: &five, EndLine: &ten}},
 	}
 	// accuracy of annotation creation tested elsewhere
-	annotationWithStartAndEndLine, _ := github.CreateAnnotation("test/file", five, ten, "error", "fail-1-2-3", "this is a failure", "raw failure text")
+	annotationWithStartAndEndLine, _ := github.CreateAnnotation("test/file", five, ten, "error", "fail-1-2-3", "this is a failure")
 
 	tests := []struct {
 		name       string
@@ -100,8 +100,8 @@ func TestSarifsToAnnotationsConverter(t *testing.T) {
 			sarif.ResultLocation{Filepath: "test/file", StartLine: &five}},
 	}
 	// accuracy of annotation creation tested elsewhere
-	annotationOriginal, _ := github.CreateAnnotation("test/file", five, five, "error", "fail-1-2-3", "this is a failure", "raw failure text")
-	annotationOriginalReportedTwice, _ := github.CreateAnnotation("test/file", five, five, "error", "fail-1-2-3 (reported 2 times)", "this is a failure", "raw failure text")
+	annotationOriginal, _ := github.CreateAnnotation("test/file", five, five, "error", "fail-1-2-3", "this is a failure")
+	annotationOriginalReportedTwice, _ := github.CreateAnnotation("test/file", five, five, "error", "fail-1-2-3 (reported 2 times)", "this is a failure")
 
 	sarifAsWarning := sarif.Result{
 		Message: "this is a failure",
@@ -112,8 +112,8 @@ func TestSarifsToAnnotationsConverter(t *testing.T) {
 			sarif.ResultLocation{Filepath: "test/file", StartLine: &five}},
 	}
 	// accuracy of annotation creation tested elsewhere
-	annotationAsWarning, _ := github.CreateAnnotation("test/file", five, five, "warning", "fail-1-2-3", "this is a failure", "raw failure text")
-	annotationAsWarningReportedTwice, _ := github.CreateAnnotation("test/file", five, five, "warning", "fail-1-2-3 (reported 2 times)", "this is a failure", "raw failure text")
+	annotationAsWarning, _ := github.CreateAnnotation("test/file", five, five, "warning", "fail-1-2-3", "this is a failure")
+	annotationAsWarningReportedTwice, _ := github.CreateAnnotation("test/file", five, five, "warning", "fail-1-2-3 (reported 2 times)", "this is a failure")
 
 	sarifNewId := sarif.Result{
 		Message: "this is a failure",
@@ -124,7 +124,7 @@ func TestSarifsToAnnotationsConverter(t *testing.T) {
 			sarif.ResultLocation{Filepath: "test/file", StartLine: &five}},
 	}
 	// accuracy of annotation creation tested elsewhere
-	annotationNewId, _ := github.CreateAnnotation("test/file", five, five, "error", "new-id-3", "this is a failure", "raw failure text")
+	annotationNewId, _ := github.CreateAnnotation("test/file", five, five, "error", "new-id-3", "this is a failure")
 
 	sarifNewStartLine := sarif.Result{
 		Message: "this is a failure",
@@ -135,7 +135,7 @@ func TestSarifsToAnnotationsConverter(t *testing.T) {
 			sarif.ResultLocation{Filepath: "test/file", StartLine: &six}},
 	}
 	// accuracy of annotation creation tested elsewhere
-	annotationNewStartLine, _ := github.CreateAnnotation("test/file", six, six, "error", "new-id-3", "this is a failure", "raw failure text")
+	annotationNewStartLine, _ := github.CreateAnnotation("test/file", six, six, "error", "new-id-3", "this is a failure")
 
 	sarifNewEndLine := sarif.Result{
 		Message: "this is a failure",
@@ -146,7 +146,7 @@ func TestSarifsToAnnotationsConverter(t *testing.T) {
 			sarif.ResultLocation{Filepath: "test/file", StartLine: &five, EndLine: &ten}},
 	}
 	// accuracy of annotation creation tested elsewhere
-	annotationNewEndLine, _ := github.CreateAnnotation("test/file", five, ten, "error", "new-id-3", "this is a failure", "raw failure text")
+	annotationNewEndLine, _ := github.CreateAnnotation("test/file", five, ten, "error", "new-id-3", "this is a failure")
 
 	tests := []struct {
 		name                string
