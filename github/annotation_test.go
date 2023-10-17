@@ -138,9 +138,8 @@ func TestCreateAnnotation(t *testing.T) {
 	level := "warning"
 	title := "Finding title"
 	message := "Finding message"
-	details := "raw finding details"
 
-	got, err := CreateAnnotation(path, startLine, endLine, level, title, message, details)
+	got, err := CreateAnnotation(path, startLine, endLine, level, title, message)
 	if err != nil {
 		t.Error(errors.Wrap(err, "failed to create annotation"))
 	}
@@ -153,7 +152,6 @@ func TestCreateAnnotation(t *testing.T) {
 			Title:           &title,
 			Message:         &message,
 			AnnotationLevel: &level,
-			RawDetails:      &details,
 		},
 		level:     warningLevel,
 		fileName:  path,

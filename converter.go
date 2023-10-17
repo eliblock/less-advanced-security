@@ -55,5 +55,5 @@ func resultToAnnotation(result sarif.Result) (*github.Annotation, error) {
 
 	title := result.RuleID
 
-	return github.CreateAnnotation(result.Locations[0].Filepath, startLine, endLine, result.Level, title, result.Message, result.Raw)
+	return github.CreateAnnotation(result.Locations[0].Filepath, startLine, endLine, result.Level, title, result.Message)
 }
