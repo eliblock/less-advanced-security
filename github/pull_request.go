@@ -3,6 +3,7 @@ package github
 import (
 	"bufio"
 	"context"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -140,6 +141,10 @@ func sdkFilesToInternalFiles(sdkFiles []*github.CommitFile) ([]*pullRequestFile,
 	return internalFiles, nil
 }
 
+var patchLinesRegexp = regexp.MustCompile(
+	`^@@ -(?P<old_start>\d+),(?P<old_rows>\d+) \+(?P<new_start>\d+),(?P<new_rows>\d) @@.*$`,
+)
+
 // Convert a file patch to an array of lineBounds.
 //
 // A couple optimization are used specific to our use case:
@@ -153,29 +158,40 @@ func patchToLineBounds(patch string) ([]lineBound, error) {
 	scanner := bufio.NewScanner(strings.NewReader(patch))
 	for scanner.Scan() {
 		line := scanner.Text()
-		// patch header lines are formatted like:
-		// @@ -0,0 +1,5 @@ <arbitrary line of code which may be blank>
-		if len(line) >= 15 && strings.HasPrefix(line, "@@ -") && strings.Contains(line[2:], " @@") {
-			// split into four pieces: (0) @@, (1) old line number and offset, (2), new line number and offset, (3) @@
-			segments := strings.Split(line, " ")
-			if len(segments) < 4 {
-				continue
-			}
-
-			// split and parse new line numbers
-			bounds := strings.Split(segments[2], ",")
-			start, err := strconv.Atoi(bounds[0][1:]) // drop the "+"
-			if err != nil {
-				return nil, errors.Wrapf(err, "failed to convert %v to integer while processing %q", bounds[0][1:], line)
-			}
-			endOffset, err := strconv.Atoi(bounds[1]) // one-indexed offset (subtract 1 when using)
-			if err != nil {
-				return nil, errors.Wrapf(err, "failed to convert %v to integer while processing %q", bounds[0][1:], line)
-			}
-
-			lineBounds = append(lineBounds, lineBound{start: start, end: start + endOffset - 1})
+		match := namedMatch(patchLinesRegexp, line)
+		if match == nil {
+			continue
 		}
+
+		start, err := strconv.Atoi(match["new_start"])
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to convert %v to integer while processing %q", match["new_start"], line)
+		}
+		endOffset, err := strconv.Atoi(match["new_rows"]) // one-indexed offset (subtract 1 when using)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to convert %v to integer while processing %q", match["new_rows"], line)
+		}
+
+		lineBounds = append(lineBounds, lineBound{
+			start: start,
+			end: start + endOffset - 1,
+		})
 	}
 
 	return lineBounds, nil
+}
+
+func namedMatch(re *regexp.Regexp, text string) map[string]string {
+	matches := patchLinesRegexp.FindStringSubmatch(text)
+	if matches == nil {
+		return nil
+	}
+	matchesByName := map[string]string{}
+	for i, name := range re.SubexpNames() {
+		if i == 0 || name == "" {
+			continue
+		}
+		matchesByName[name] = matches[i]
+	}
+	return matchesByName
 }
