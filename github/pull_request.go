@@ -141,7 +141,7 @@ func sdkFilesToInternalFiles(sdkFiles []*github.CommitFile) ([]*pullRequestFile,
 	return internalFiles, nil
 }
 
-var patchLinesRegexp = regexp.MustCompile(
+var diffRangeRegexp = regexp.MustCompile(
 	`^@@ -(?P<old_start>\d+),(?P<old_rows>\d+) \+(?P<new_start>\d+),(?P<new_rows>\d) @@.*$`,
 )
 
@@ -158,42 +158,32 @@ func patchToLineBounds(patch string) ([]lineBound, error) {
 	scanner := bufio.NewScanner(strings.NewReader(patch))
 	for scanner.Scan() {
 		line := scanner.Text()
-		match := namedMatch(patchLinesRegexp, line)
+		match := namedMatch(diffRangeRegexp, line)
 		if match == nil {
 			continue
 		}
 
-		oldStart, err := strconv.Atoi(match["old_start"])
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to convert %v to integer while processing %q", match["old_start"], line)
-		}
-		oldEndOffset, err := strconv.Atoi(match["old_rows"])
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to convert %v to integer while processing %q", match["old_rows"], line)
-		}
-		start, err := strconv.Atoi(match["new_start"])
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to convert %v to integer while processing %q", match["new_start"], line)
-		}
-		endOffset, err := strconv.Atoi(match["new_rows"]) // one-indexed offset (subtract 1 when using)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to convert %v to integer while processing %q", match["new_rows"], line)
-		}
+		// NOTE: each of these named matches must have integers
+		// because the regexp specifically checks for `\d+`.
+		oldStart, _ := strconv.Atoi(match["old_start"])
+		oldRows, _ := strconv.Atoi(match["old_rows"])
+		newStart, _ := strconv.Atoi(match["new_start"])
+		newRows, _ := strconv.Atoi(match["new_rows"]) // one-indexed offset (subtract 1 when using)
 
-		diff := endOffset - oldEndOffset
-		for i, prevBound := range lineBounds {
-			if oldStart < prevBound.start {
-				prevBound.start += diff
-				prevBound.end += diff
-			} else if oldStart < prevBound.end {
-				prevBound.end += diff
+		rowDiff := newRows - oldRows
+		for i, bound := range lineBounds {
+			if oldStart < bound.start {
+				bound.start += rowDiff
+				bound.end += rowDiff
+			} else if oldStart < bound.end {
+				bound.end += rowDiff
 			}
-			lineBounds[i] = prevBound
+			lineBounds[i] = bound
 		}
 
 		lineBounds = append(lineBounds, lineBound{
-			start: start,
-			end: start + endOffset - 1,
+			start: newStart,
+			end:   newStart + newRows - 1,
 		})
 	}
 
@@ -201,7 +191,7 @@ func patchToLineBounds(patch string) ([]lineBound, error) {
 }
 
 func namedMatch(re *regexp.Regexp, text string) map[string]string {
-	matches := patchLinesRegexp.FindStringSubmatch(text)
+	matches := re.FindStringSubmatch(text)
 	if matches == nil {
 		return nil
 	}
