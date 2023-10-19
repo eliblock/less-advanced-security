@@ -3,6 +3,7 @@ package github
 import (
 	"bufio"
 	"context"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -140,6 +141,10 @@ func sdkFilesToInternalFiles(sdkFiles []*github.CommitFile) ([]*pullRequestFile,
 	return internalFiles, nil
 }
 
+var diffRangeRegexp = regexp.MustCompile(
+	`^@@ -(?P<old_start>\d+),(?P<old_rows>\d+) \+(?P<new_start>\d+),(?P<new_rows>\d) @@.*$`,
+)
+
 // Convert a file patch to an array of lineBounds.
 //
 // A couple optimization are used specific to our use case:
@@ -153,29 +158,49 @@ func patchToLineBounds(patch string) ([]lineBound, error) {
 	scanner := bufio.NewScanner(strings.NewReader(patch))
 	for scanner.Scan() {
 		line := scanner.Text()
-		// patch header lines are formatted like:
-		// @@ -0,0 +1,5 @@ <arbitrary line of code which may be blank>
-		if len(line) >= 15 && strings.HasPrefix(line, "@@ -") && strings.Contains(line[2:], " @@") {
-			// split into four pieces: (0) @@, (1) old line number and offset, (2), new line number and offset, (3) @@
-			segments := strings.Split(line, " ")
-			if len(segments) < 4 {
-				continue
-			}
-
-			// split and parse new line numbers
-			bounds := strings.Split(segments[2], ",")
-			start, err := strconv.Atoi(bounds[0][1:]) // drop the "+"
-			if err != nil {
-				return nil, errors.Wrapf(err, "failed to convert %v to integer while processing %q", bounds[0][1:], line)
-			}
-			endOffset, err := strconv.Atoi(bounds[1]) // one-indexed offset (subtract 1 when using)
-			if err != nil {
-				return nil, errors.Wrapf(err, "failed to convert %v to integer while processing %q", bounds[0][1:], line)
-			}
-
-			lineBounds = append(lineBounds, lineBound{start: start, end: start + endOffset - 1})
+		match := namedMatch(diffRangeRegexp, line)
+		if match == nil {
+			continue
 		}
+
+		// NOTE: each of these named matches must have integers
+		// because the regexp specifically checks for `\d+`.
+		oldStart, _ := strconv.Atoi(match["old_start"])
+		oldRows, _ := strconv.Atoi(match["old_rows"])
+		newStart, _ := strconv.Atoi(match["new_start"])
+		newRows, _ := strconv.Atoi(match["new_rows"]) // one-indexed offset (subtract 1 when using)
+
+		rowDiff := newRows - oldRows
+		for i, bound := range lineBounds {
+			if oldStart < bound.start {
+				bound.start += rowDiff
+				bound.end += rowDiff
+			} else if oldStart < bound.end {
+				bound.end += rowDiff
+			}
+			lineBounds[i] = bound
+		}
+
+		lineBounds = append(lineBounds, lineBound{
+			start: newStart,
+			end:   newStart + newRows - 1,
+		})
 	}
 
 	return lineBounds, nil
+}
+
+func namedMatch(re *regexp.Regexp, text string) map[string]string {
+	matches := re.FindStringSubmatch(text)
+	if matches == nil {
+		return nil
+	}
+	matchesByName := map[string]string{}
+	for i, name := range re.SubexpNames() {
+		if i == 0 || name == "" {
+			continue
+		}
+		matchesByName[name] = matches[i]
+	}
+	return matchesByName
 }
