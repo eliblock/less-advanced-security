@@ -269,7 +269,7 @@ func TestSdkFilesToInternalFiles(t *testing.T) {
 	}
 }
 
-//go:embed multi_stage.patch
+//go:embed fixtures/multi_stage.patch
 var multiStagePatch string
 
 func TestPatchToLineBounds(t *testing.T) {
