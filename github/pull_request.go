@@ -163,6 +163,14 @@ func patchToLineBounds(patch string) ([]lineBound, error) {
 			continue
 		}
 
+		oldStart, err := strconv.Atoi(match["old_start"])
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to convert %v to integer while processing %q", match["old_start"], line)
+		}
+		oldEndOffset, err := strconv.Atoi(match["old_rows"])
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to convert %v to integer while processing %q", match["old_rows"], line)
+		}
 		start, err := strconv.Atoi(match["new_start"])
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to convert %v to integer while processing %q", match["new_start"], line)
@@ -170,6 +178,17 @@ func patchToLineBounds(patch string) ([]lineBound, error) {
 		endOffset, err := strconv.Atoi(match["new_rows"]) // one-indexed offset (subtract 1 when using)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to convert %v to integer while processing %q", match["new_rows"], line)
+		}
+
+		diff := endOffset - oldEndOffset
+		for i, prevBound := range lineBounds {
+			if oldStart < prevBound.start {
+				prevBound.start += diff
+				prevBound.end += diff
+			} else if oldStart < prevBound.end {
+				prevBound.end += diff
+			}
+			lineBounds[i] = prevBound
 		}
 
 		lineBounds = append(lineBounds, lineBound{

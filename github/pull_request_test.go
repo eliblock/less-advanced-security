@@ -1,6 +1,7 @@
 package github
 
 import (
+	_ "embed"
 	"fmt"
 	"reflect"
 	"testing"
@@ -268,6 +269,9 @@ func TestSdkFilesToInternalFiles(t *testing.T) {
 	}
 }
 
+//go:embed multi_stage.patch
+var multiStagePatch string
+
 func TestPatchToLineBounds(t *testing.T) {
 	tests := []struct {
 		name, patch string
@@ -306,6 +310,14 @@ def foo():
 
      print("a print statement")
 +    print("and another.")`, []lineBound{{4, 10}, {24, 27}}},
+		{
+			"file simulating multiple changes in sequence",
+			multiStagePatch,
+			[]lineBound{
+				{11,14},
+				{1,1},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
