@@ -10,11 +10,11 @@ import (
 
 type ClientConfiguration struct {
 	AppID, InstallationID int64
-	AppKeyPath            string
+	AppKey                []byte
 }
 
 func createClient(configuration ClientConfiguration) (*github.Client, error) {
-	itr, err := ghinstallation.NewKeyFromFile(http.DefaultTransport, configuration.AppID, configuration.InstallationID, configuration.AppKeyPath)
+	itr, err := ghinstallation.New(http.DefaultTransport, configuration.AppID, configuration.InstallationID, configuration.AppKey)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to configure GitHub access")
 	}
