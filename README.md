@@ -63,7 +63,7 @@ less-advanced-security --help
 
 Run your sarif-producing scan, writing the sarif file to disk.
 
-Then run
+Then run:
 ```sh
 less-advanced-security --app_id=<app_id> --install_id=<installation_id> --key_path=<path_to_key> --sha=<sha_of_target_commit> --repo=<repo_owner>/<repo_name> --pr=<pr_number> --sarif_path=<path_to_sarif_file>
 ```
@@ -73,6 +73,9 @@ For example:
 ```sh
 less-advanced-security --app_id=12345 --install_id=87654321 --key_path=tmp/application_private_key.pem --sha=ee5dabb638b6b874c42bc3c915cf94d4b6b346b6 --repo=eliblock/less-advanced-security --pr=57 --sarif_path=/tmp/scan-results/sarif.json
 ```
+
+The application's private key can also be supplied through the `APP_KEY` environment variable instead of
+the `--key_path` flag.
 
 ### Configuration
 
