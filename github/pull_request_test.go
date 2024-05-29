@@ -282,6 +282,17 @@ func TestPatchToLineBounds(t *testing.T) {
 +4
 `, []lineBound{{1, 4}},
 		},
+		{"new one-line file with no end offset", `
+@@ -0,0 +1 @@
++1
+`, []lineBound{{1, 1}},
+		},
+		{"removed file", `
+@@ -1,224 +1 @@
+-1
+`, []lineBound{{1, 1}},
+		},
+
 		{"file with a change in the middle", `
 @@ -4,4 +4,5 @@ something_arbitrary_here
 

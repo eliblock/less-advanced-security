@@ -155,7 +155,9 @@ func patchToLineBounds(patch string) ([]lineBound, error) {
 		line := scanner.Text()
 		// patch header lines are formatted like:
 		// @@ -0,0 +1,5 @@ <arbitrary line of code which may be blank>
-		if len(line) >= 15 && strings.HasPrefix(line, "@@ -") && strings.Contains(line[2:], " @@") {
+		// The second number in each pair (the offset) may not be set, e.g.:
+		// @@ -0,0 +1 @@ <arbitrary line of code which may be blank>
+		if len(line) >= 13 && strings.HasPrefix(line, "@@ -") && strings.Contains(line[2:], " @@") {
 			// split into four pieces: (0) @@, (1) old line number and offset, (2), new line number and offset, (3) @@
 			segments := strings.Split(line, " ")
 			if len(segments) < 4 {
@@ -168,9 +170,15 @@ func patchToLineBounds(patch string) ([]lineBound, error) {
 			if err != nil {
 				return nil, errors.Wrapf(err, "failed to convert %v to integer while processing %q", bounds[0][1:], line)
 			}
-			endOffset, err := strconv.Atoi(bounds[1]) // one-indexed offset (subtract 1 when using)
-			if err != nil {
-				return nil, errors.Wrapf(err, "failed to convert %v to integer while processing %q", bounds[0][1:], line)
+			var endOffset int
+			if len(bounds) == 1 { // endOffset may not exist (e.g., @@ -0,0 +1 @@)
+				endOffset = 1
+			} else {
+				var err error
+				endOffset, err = strconv.Atoi(bounds[1]) // one-indexed offset (subtract 1 when using)
+				if err != nil {
+					return nil, errors.Wrapf(err, "failed to convert %v to integer while processing %q", bounds[0][1:], line)
+				}
 			}
 
 			lineBounds = append(lineBounds, lineBound{start: start, end: start + endOffset - 1})
